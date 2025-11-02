@@ -2,6 +2,27 @@
 
 version: 1.0
 
+dependencies:
+  - from: Mesh
+    to: Point
+    reason: "Mesh uses Point in methods"
+
+# Optional: Configuration
+config:
+  project_name: myapi         # Project name for CMakeLists.txt
+  version: 1.0.0
+  description: "Geometry library Node.js bindings"
+  author: "xaliphostes"
+  license: MIT
+  rosetta_include_dir: ../rosetta/include
+  include_dirs:
+    - ../
+  namespace: Rosetta          # Wrapper namespace
+  prefix: I                   # Wrapper class prefix (IPoint, IModel, etc.)
+  generate_docs: true         # Generate documentation comments
+  validate_types: true        # Validate type consistency
+
+
 types:
   - name: Point
     include: "../api.h"
@@ -70,15 +91,3 @@ types:
         const: true
         params: []
 
-dependencies:
-  - from: Mesh
-    to: Point
-    reason: "Mesh uses Point in methods"
-
-# Optional: Configuration
-config:
-  project_name: myapi         # Project name for CMakeLists.txt
-  namespace: Rosetta          # Wrapper namespace
-  prefix: I                   # Wrapper class prefix (IPoint, IModel, etc.)
-  generate_docs: true         # Generate documentation comments
-  validate_types: true        # Validate type consistency

@@ -37,6 +37,10 @@ class RosettaGenerator:
         # Generate CMakeLists.txt
         self.generate_cmake_file(sorted_types, output_dir)
         
+        # Generate Node.js specific files
+        self.generate_binding_gyp(sorted_types, output_dir)
+        self.generate_package_json(output_dir)
+        
         print("\nGeneration complete!")
     
     def topological_sort(self) -> List[Dict]:
@@ -290,6 +294,138 @@ class RosettaGenerator:
         output_file = output_dir / "bindings.cpp"
         with open(output_file, 'w') as f:
             f.write('\n'.join(lines))
+        
+        print(f"  Generated: {output_file}")
+    
+    def generate_binding_gyp(self, sorted_types: List[Dict], output_dir: Path):
+        """Generate binding.gyp for node-gyp build system"""
+        
+        # Get project name from IDL or use default
+        project_name = self.idl.get('config', {}).get('project_name', 'myapi')
+        
+        # Get custom include directories from config
+        custom_includes = self.idl.get('config', {}).get('include_dirs', [])
+        rosetta_include = self.idl.get('config', {}).get('rosetta_include_dir', '../rosetta/include')
+        
+        # Collect all wrapper source files
+        sources = []
+        for type_info in sorted_types:
+            wrapper_name = f"I{type_info['name']}"
+            sources.append(f"{wrapper_name}.cpp")
+        sources.append("bindings.cpp")
+        
+        # Build the binding.gyp structure
+        gyp = {
+            "targets": [
+                {
+                    "target_name": project_name,
+                    "sources": sources,
+                    "include_dirs": [
+                        "<!@(node -p \"require('node-addon-api').include\")",
+                        rosetta_include
+                    ] + custom_includes,
+                    "dependencies": [
+                        "<!(node -p \"require('node-addon-api').gyp\")"
+                    ],
+                    "cflags!": ["-fno-exceptions", "-fno-rtti"],
+                    "cflags_cc!": ["-fno-exceptions", "-fno-rtti"],
+                    "cflags_cc": [
+                        "-std=c++20",
+                        "-fexceptions",
+                        "-frtti"
+                    ],
+                    "xcode_settings": {
+                        "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+                        "GCC_ENABLE_CPP_RTTI": "YES",
+                        "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+                        "CLANG_CXX_LIBRARY": "libc++",
+                        "MACOSX_DEPLOYMENT_TARGET": "10.14",
+                        "OTHER_CPLUSPLUSFLAGS": [
+                            "-std=c++20",
+                            "-fexceptions",
+                            "-frtti"
+                        ]
+                    },
+                    "msvs_settings": {
+                        "VCCLCompilerTool": {
+                            "ExceptionHandling": 1,
+                            "RuntimeTypeInfo": "true",
+                            "AdditionalOptions": [
+                                "/std:c++20"
+                            ]
+                        }
+                    },
+                    "conditions": [
+                        ["OS==\"win\"", {
+                            "defines": [
+                                "_HAS_EXCEPTIONS=1"
+                            ]
+                        }]
+                    ]
+                }
+            ]
+        }
+        
+        # Write binding.gyp as formatted JSON
+        output_file = output_dir / "binding.gyp"
+        with open(output_file, 'w') as f:
+            import json
+            json.dump(gyp, f, indent=2)
+        
+        print(f"  Generated: {output_file}")
+    
+    def generate_package_json(self, output_dir: Path):
+        """Generate package.json for Node.js project"""
+        
+        # Get config from IDL
+        config = self.idl.get('config', {})
+        project_name = config.get('project_name', 'myapi')
+        version = config.get('version', '1.0.0')
+        description = config.get('description', f'Node.js bindings for {project_name}')
+        author = config.get('author', '')
+        license_type = config.get('license', 'LGPL-3.0-or-later')
+        
+        package_json = {
+            "name": project_name,
+            "version": version,
+            "description": description,
+            "main": "index.js",
+            "scripts": {
+                "install": "node-gyp rebuild",
+                "build": "node-gyp build",
+                "clean": "node-gyp clean",
+                "test": "node test.js"
+            },
+            "gypfile": True,
+            "dependencies": {
+                "node-addon-api": "^7.0.0"
+            },
+            "devDependencies": {
+                "node-gyp": "^10.0.0"
+            },
+            "keywords": [
+                "cpp", "c++",
+                "javascript",
+                "nodejs",
+                "napi",
+                "bindings",
+                "native",
+                "addon",
+                project_name
+            ],
+            "license": license_type
+        }
+        
+        # Add author if provided
+        if author:
+            package_json["author"] = author
+        
+        # Write package.json as formatted JSON
+        output_file = output_dir / "package.json"
+        with open(output_file, 'w') as f:
+            import json
+            json.dump(package_json, f, indent=2)
+            f.write('\n')  # Add trailing newline
         
         print(f"  Generated: {output_file}")
     
