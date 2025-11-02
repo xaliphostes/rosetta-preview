@@ -1,0 +1,24 @@
+# api.rosetta.yaml
+
+version: 1.0
+
+types:
+  - name: Point1
+    include: "../api.h"
+    export_as: Point1
+    
+    constructors:
+      - params: []
+
+  - name: Point2
+    include: <myapi/api.h>
+    export_as: Point2
+    
+    constructors:
+      - params: []
+
+    constructors:
+      - params: []
+
+
+...

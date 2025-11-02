@@ -1,0 +1,84 @@
+# api.rosetta.yaml
+
+version: 1.0
+
+types:
+  - name: Point
+    include: "../api.h"
+    namespace: MyAPI
+    export_as: Point
+    
+    constructors:
+      - params: []
+      - params: [double x, double y, double z]
+    
+    methods:
+      - name: magnitude
+        return: double
+        const: true
+        params: []
+      - name: x
+        return: double
+        const: true
+        params: []
+      - name: setX
+        return: void
+        const: false
+        params: [double val]
+      - name: y
+        return: double
+        const: true
+        params: []
+      - name: setY
+        return: void
+        const: false
+        params: [double val]
+      - name: z
+        return: double
+        const: true
+        params: []
+      - name: setZ
+        return: void
+        const: false
+        params: [double val]
+
+
+  - name: Mesh
+    include: "../api.h"
+    namespace: MyAPI
+    export_as: Mesh
+    
+    constructors:
+      - params: []
+    
+    methods:
+      - name: addVertex
+        return: void
+        params: [const MyAPI::Point& p]
+      
+      - name: getVertices
+        return: const std::vector<MyAPI::Point>&
+        const: true
+        params: []
+      
+      - name: setVertices
+        return: void
+        params: [const std::vector<MyAPI::Point>& vertices]
+      
+      - name: getVertexCount
+        return: int
+        const: true
+        params: []
+
+dependencies:
+  - from: Mesh
+    to: Point
+    reason: "Mesh uses Point in methods"
+
+# Optional: Configuration
+config:
+  project_name: myapi         # Project name for CMakeLists.txt
+  namespace: Rosetta          # Wrapper namespace
+  prefix: I                   # Wrapper class prefix (IPoint, IModel, etc.)
+  generate_docs: true         # Generate documentation comments
+  validate_types: true        # Validate type consistency

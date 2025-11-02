@@ -23,3 +23,14 @@ model.surfaces.forEach(s => {
         console.log(t.a, t.b, t.c)
     })
 })
+
+class TSurface extends addon.Surface {
+    constructor() {
+        super()
+        this.prop = []
+    }
+}
+
+const s = new TSurface
+s.prop = [1,2,3]
+console.log(s)
