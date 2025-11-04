@@ -91,7 +91,7 @@ class RosettaGenerator:
             "#include <rosetta/rosetta.h>",
             f"#include {self.format_include_path(include_path)}",
             "",
-            "namespace Rosetta {",
+            # "namespace Rosetta {",
             "",
             f"class {wrapper_name} : public rosetta::Introspectable {{",
             f"    INTROSPECTABLE({wrapper_name})",
@@ -138,7 +138,7 @@ class RosettaGenerator:
         lines.extend([
             "};",
             "",
-            "} // namespace Rosetta",
+            # "} // namespace Rosetta",
             ""
         ])
         
@@ -159,7 +159,7 @@ class RosettaGenerator:
             " */",
             f'#include "{wrapper_name}.h"',
             "",
-            "namespace Rosetta {",
+            # "namespace Rosetta {",
             "",
             "// Constructors",
         ]
@@ -248,7 +248,7 @@ class RosettaGenerator:
             "       ;",
             "}",
             "",
-            "} // namespace Rosetta",
+            # "} // namespace Rosetta",
             ""
         ])
         
@@ -276,14 +276,28 @@ class RosettaGenerator:
         lines.extend([
             "",
             "BEGIN_JS(generator) {",
-            "    // Types registered in dependency order",
         ])
         
-        # Register all types
+        # Register original types with their fully qualified names (only if namespaced)
+        has_namespaced_types = any(type_info.get('namespace', '').strip() for type_info in sorted_types)
+        
+        if has_namespaced_types:
+            lines.append("    // Register original types with their fully qualified names")
+            for type_info in sorted_types:
+                namespace = type_info.get('namespace', '').strip()
+                if namespace:  # Only register if namespace is present
+                    full_type_name = self.get_full_type_name(type_info)
+                    lines.append(f'    rosetta::TypeNameRegistry::instance().register_type<{full_type_name}>("{full_type_name}");')
+            lines.append("")
+        
+        lines.append("    // Register wrapper classes in dependency order")
+        
+        # Register all wrapper classes
         for type_info in sorted_types:
             wrapper_name = f"I{type_info['name']}"
             export_name = type_info.get('export_as', type_info['name'])
-            lines.append(f'    registerAllForClass<Rosetta::{wrapper_name}>(generator, "{export_name}");')
+            # lines.append(f'    registerAllForClass<Rosetta::{wrapper_name}>(generator, "{export_name}");')
+            lines.append(f'    registerAllForClass<{wrapper_name}>(generator, "{export_name}");')
         
         lines.extend([
             "}",
@@ -665,8 +679,9 @@ class RosettaGenerator:
     def get_full_type_name(self, type_info: Dict) -> str:
         """Get full type name including namespace if specified"""
         name = type_info['name']
-        namespace = type_info.get('namespace', '')
+        namespace = type_info.get('namespace', '').strip()
         
+        # Only add namespace if it's explicitly provided and not empty
         if namespace:
             return f"{namespace}::{name}"
         return name

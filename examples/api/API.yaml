@@ -14,10 +14,9 @@ config:
   description: "Geometry library Node.js bindings"
   author: "xaliphostes"
   license: MIT
-  rosetta_include_dir: ../rosetta/include
+  rosetta_include_dir: ../../../include
   include_dirs:
     - ../
-  namespace: Rosetta          # Wrapper namespace
   prefix: I                   # Wrapper class prefix (IPoint, IModel, etc.)
   generate_docs: true         # Generate documentation comments
   validate_types: true        # Validate type consistency
